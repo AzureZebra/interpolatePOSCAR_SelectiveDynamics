@@ -43,6 +43,7 @@ class Poscar:
         self.c = []
         self.elements = []
         self.numOfElements = []
+        self.SD = ""
         self.type = ""
         self.atoms = []
 
@@ -57,11 +58,11 @@ class Poscar:
         self.c = [float(f) for f in lines[4].split()]
         self.elements = lines[5].split()
         self.numOfElements = [int(f) for f in lines[6].split()]
-        self.type = lines[7]
+        self.SD = lines[7]
+        self.type = lines[8]
 
         for i in range(sum(self.numOfElements)):
-            self.atoms.append([float(f) for f in lines[i+8].split()])
-
+            self.atoms.append([f for f in lines[i+9].split()])
 
     def difference(self, poscarFirst):
         diff = Poscar()
@@ -75,7 +76,8 @@ class Poscar:
         diff.numOfElements = self.numOfElements
 
         for (atomL, atomF) in zip(self.atoms, poscarFirst.atoms):
-            vec = [x - y for (x, y) in zip(atomL, atomF)]
+
+            vec = [float(x) - float(y) for (x, y) in zip(atomL[:3], atomF[:3])]
             for key, val in enumerate(vec):
                 if val > 0.5:
                     vec[key] -= 1
@@ -119,10 +121,11 @@ if __name__ == '__main__':
             [x + y * delta / imageNum for (x, y) in zip(poscarFirst.c, deltaPoscar.c)]))
         lines.append("   {}".format("  ".join(poscarFirst.elements)))
         lines.append("   {}".format("  ".join([str(f) for f in poscarFirst.numOfElements])))
+        lines.append(poscarFirst.SD)
         lines.append(poscarFirst.type)
         for atomF, atomDelta in zip(poscarFirst.atoms, deltaPoscar.atoms):
-            lines.append("  {0[0]:20.16f} {0[1]:20.16f} {0[2]:20.16f}".format(
-                [x + y * delta / imageNum for (x, y) in zip(atomF, atomDelta)]))
+            lines.append("  {0[0]:20.16f} {0[1]:20.16f} {0[2]:20.16f} {0[3]} {0[4]} {0[5]}".format(
+                [float(x) + float(y) * delta / imageNum for (x, y) in zip(atomF[:3], atomDelta[:3])]+[texSD for texSD in atomF[3:]]))
 
         with open(dir + "/POSCAR", "w") as f:
             f.write("\n".join(lines))
